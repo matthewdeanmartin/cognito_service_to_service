@@ -1,0 +1,28 @@
+<div class="card">
+  <h1>Cognito M2M Local Demo</h1>
+
+  <p *ngIf="!loggedIn">
+    <button (click)="login()">Login as demo-user</button>
+  </p>
+
+  <ng-container *ngIf="loggedIn">
+    <p>
+      Logged in as <strong>{{ username }}</strong>
+      &nbsp;<button (click)="logout()">Logout</button>
+    </p>
+
+    <p>
+      <button (click)="callPrimary()" [disabled]="loading">
+        {{ loading ? "Calling…" : "Call primary" }}
+      </button>
+    </p>
+
+    <div class="result" *ngIf="result">
+      <div>Primary: {{ result.primary }}</div>
+      <div>Secondary: {{ result.secondaryLabel }}</div>
+      <div>User: {{ result.user }}</div>
+    </div>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+  </ng-container>
+</div>

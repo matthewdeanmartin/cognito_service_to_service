@@ -1,0 +1,8 @@
+# Test config: JwtDecoder is mocked in tests, so no real issuer is contacted.
+# A placeholder issuer-uri keeps property binding happy if anything reads it.
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://example.invalid/issuer

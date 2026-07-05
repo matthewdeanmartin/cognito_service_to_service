@@ -1,0 +1,18 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: primary
+
+demo:
+  secondary-base-url: ${SECONDARY_BASE_URL:http://localhost:8082}
+  cognito:
+    token-url: ${COGNITO_TOKEN_URL}
+    client-id: ${COGNITO_PRIMARY_CLIENT_ID}
+    client-secret: ${COGNITO_PRIMARY_CLIENT_SECRET}
+    scope: ${COGNITO_SCOPE:secondary/read}
+
+logging:
+  level:
+    com.example.primary: INFO

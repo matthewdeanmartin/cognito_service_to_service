@@ -22,3 +22,22 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# --- project ---
+# Local secrets / env (never commit)
+.env.local
+
+# Maven
+target/
+
+# Node / Angular
+node_modules/
+ui/.angular/
+dist/
+
+# CDK
+infra/cdk.out/
+*.d.ts
+!**/src/**
+infra/lib/*.js
+infra/bin/*.js

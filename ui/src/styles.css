@@ -1,0 +1,45 @@
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 2rem;
+  background: #f5f6f8;
+  color: #1c1e21;
+}
+
+.card {
+  max-width: 32rem;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2rem;
+}
+
+button {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #2d6cdf;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #235bc0;
+}
+
+.result {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #eef4ff;
+  border-radius: 8px;
+}
+
+.error {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #ffecec;
+  color: #b3261e;
+  border-radius: 8px;
+}
