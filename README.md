@@ -1,5 +1,7 @@
 # cognito-m2m-local-demo
 
+[Full docs](https://cognito-service-to-service.readthedocs.io/en/latest/)
+
 Proof of concept: Angular → primary Spring Boot → secondary Spring Boot, with
 **Amazon Cognito OAuth 2.0 client-credentials (M2M)** auth on the service hop.
 
