@@ -32,6 +32,52 @@ issuer validation, use moto, which:
 That's enough for secondary to verify tokens exactly as it would against real
 Cognito.
 
+## Provisioning without CDK: the boto3 script
+
+`scripts/cognito_setup.py` is a non-CDK way to create the same Cognito resources
+(user pool, resource server `secondary/read`, M2M app client with secret,
+domain) and write `.env.local`. It's idempotent — each step **skips** what
+already exists — and it works against either a local moto server or real AWS.
+
+```bash
+# 1. start a local fake-AWS server
+make run-moto                       # moto on http://localhost:5111
+
+# 2. drive the lifecycle (moto is the default endpoint)
+make cognito-status                 # what exists right now
+make cognito-setup                  # create anything missing, write .env.local
+make cognito-setup                  # run again -> every step reports "skip"
+make cognito-teardown               # delete the user pool
+```
+
+Under the hood these call:
+
+```bash
+uv run python scripts/cognito_setup.py {setup|status|teardown} \
+    --endpoint-url http://localhost:5111
+```
+
+To point the **same script at real AWS**, drop the endpoint (it then uses your
+normal AWS credentials):
+
+```bash
+make cognito-setup COGNITO_ENDPOINT_URL=
+# or directly:
+uv run python scripts/cognito_setup.py setup
+```
+
+!!! note "Why boto3 instead of the bash export script"
+    The CDK stack + `scripts/export-cdk-outputs.sh` (bash) is the "real" path.
+    The boto3 script is a lighter alternative for local iteration: idempotent
+    build-up/skip/teardown in one place, no CloudFormation, and it runs against
+    moto so you never touch AWS. Both produce the same `.env.local`.
+
+!!! warning "moto has no token endpoint"
+    The script provisions the control-plane resources, but moto does not serve
+    the Cognito `/oauth2/token` hosted endpoint. So in moto mode it sets
+    `COGNITO_TOKEN_URL` to the local Flask shim (`http://localhost:9999/...`)
+    described below, which is what actually issues tokens in a full local run.
+
 ## How the moto rig works
 
 moto does not emulate the OAuth2 `/oauth2/token` domain endpoint or the OpenID

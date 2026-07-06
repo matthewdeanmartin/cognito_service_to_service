@@ -1,4 +1,8 @@
-.PHONY: help install deploy destroy export-env run-primary run-secondary run-ui test-demo clean docs docs-serve
+.PHONY: help install deploy destroy export-env run-primary run-secondary run-ui test-demo clean docs docs-serve run-moto cognito-setup cognito-status cognito-teardown
+
+# Endpoint for the boto3 Cognito script: local moto by default. Set to empty
+# (make cognito-setup COGNITO_ENDPOINT_URL=) to target real AWS.
+COGNITO_ENDPOINT_URL ?= http://localhost:5111
 
 help:
 	@echo "Targets:"
@@ -13,6 +17,10 @@ help:
 	@echo "  make clean          Clean local build outputs"
 	@echo "  make docs           Build the MkDocs site into ./site"
 	@echo "  make docs-serve     Serve the docs locally with live reload"
+	@echo "  make run-moto       Start a local moto server (fake AWS)"
+	@echo "  make cognito-setup  Provision Cognito via boto3 (moto by default)"
+	@echo "  make cognito-status Show what Cognito resources exist"
+	@echo "  make cognito-teardown  Delete the Cognito user pool"
 
 install:
 	./scripts/install.sh
@@ -48,3 +56,15 @@ docs:
 docs-serve:
 	uv sync
 	uv run mkdocs serve
+
+run-moto:
+	./scripts/run-moto.sh
+
+cognito-setup:
+	uv run python scripts/cognito_setup.py setup --endpoint-url "$(COGNITO_ENDPOINT_URL)"
+
+cognito-status:
+	uv run python scripts/cognito_setup.py status --endpoint-url "$(COGNITO_ENDPOINT_URL)"
+
+cognito-teardown:
+	uv run python scripts/cognito_setup.py teardown --endpoint-url "$(COGNITO_ENDPOINT_URL)"
