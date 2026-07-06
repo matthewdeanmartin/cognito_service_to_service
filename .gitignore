@@ -44,3 +44,4 @@ infra/cdk.out/
 !**/src/**
 infra/lib/*.js
 infra/bin/*.js
+.idea
