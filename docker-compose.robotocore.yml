@@ -1,0 +1,21 @@
+# Local robotocore (LocalStack-style AWS emulator) with a real Cognito
+# /oauth2/token endpoint. Start with:
+#
+#   docker compose -f docker-compose.robotocore.yml up -d
+#
+# Then provision Cognito against it:
+#
+#   make cognito-setup COGNITO_ENDPOINT_URL=http://localhost:4566
+#
+# Gotcha: from another container use http://robotocore:4566; from the host
+# workstation use http://localhost:4566.
+services:
+  robotocore:
+    image: jackdanger/robotocore:latest
+    container_name: robotocore
+    ports:
+      - "4566:4566"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_robotocore/health"]
+      interval: 5s
+      retries: 10

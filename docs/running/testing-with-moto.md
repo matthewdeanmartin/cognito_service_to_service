@@ -133,6 +133,13 @@ demo calls — confirming caching.
   motovenv/Scripts/pip install "moto[cognitoidp,server]" flask`.
 - Git-Bash `/c/...` paths break when passed to a Windows Python; use `C:/...`.
 
+## See also
+
+- [Testing With robotocore](testing-with-robotocore.md) — the other emulator,
+  which *does* have a real token endpoint (but unsigned tokens).
+- [Local AWS Emulators: Lessons Learned](emulators-lessons-learned.md) — the
+  full moto-vs-robotocore debrief.
+
 ## Why not LocalStack / cdklocal for the CDK?
 
 `cdklocal` targets **LocalStack**, not moto, and neither was needed here. The

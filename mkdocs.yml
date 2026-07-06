@@ -28,6 +28,8 @@ nav:
   - Running It:
       - Setup & Runbook: running/runbook.md
       - Testing Without AWS (moto): running/testing-with-moto.md
+      - Testing With robotocore: running/testing-with-robotocore.md
+      - Local AWS Emulators - Lessons Learned: running/emulators-lessons-learned.md
   - FAQ: faq.md
 validation:
   nav:

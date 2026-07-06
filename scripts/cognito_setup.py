@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Provision (or tear down) the Cognito M2M resources with boto3.
 
-A non-CDK alternative to ``infra/`` that is idempotent and works against either
-real AWS or a local moto server. It creates the same shape the CDK stack does:
+A non-CDK alternative to ``infra/`` that is idempotent and works against real
+AWS, a local moto server, or a local robotocore container. It creates the same
+shape the CDK stack does:
 
   * a user pool
   * a resource server ``secondary`` with scope ``read``  (-> ``secondary/read``)
   * an app client for ``primary`` with the client-credentials grant + a secret
-  * a hosted domain (best effort; moto accepts it but does not serve tokens)
+  * a hosted domain
 
 and then writes ``.env.local`` so the Spring services can pick the values up.
 
@@ -19,20 +20,30 @@ Commands
 
 Endpoint
 --------
-  --endpoint-url http://localhost:5000   talk to a local moto server
+  --endpoint-url http://localhost:5111   talk to a local moto server
+  --endpoint-url http://localhost:4566   talk to a local robotocore container
   (omit it to talk to real AWS using your normal credentials)
+
+The endpoint's "flavor" is auto-detected (moto vs robotocore vs real AWS) so the
+generated .env.local points COGNITO_TOKEN_URL / issuer at the right place:
+
+  * robotocore serves a real /oauth2/token + JWKS + discovery on its own host.
+  * moto has neither, so token-url points at the Flask shim (see
+    docs/running/testing-with-moto.md).
 
 Examples
 --------
-  uv run python scripts/cognito_setup.py setup --endpoint-url http://localhost:5000
-  uv run python scripts/cognito_setup.py status --endpoint-url http://localhost:5000
-  uv run python scripts/cognito_setup.py teardown --endpoint-url http://localhost:5000
+  uv run python scripts/cognito_setup.py setup --endpoint-url http://localhost:4566
+  uv run python scripts/cognito_setup.py status --endpoint-url http://localhost:4566
+  uv run python scripts/cognito_setup.py teardown --endpoint-url http://localhost:4566
 """
 from __future__ import annotations
 
 import argparse
 import os
 import sys
+import urllib.error
+import urllib.request
 
 import boto3
 from botocore.config import Config
@@ -48,6 +59,22 @@ FULL_SCOPE = f"{RESOURCE_SERVER_ID}/{SCOPE_NAME}"
 CLIENT_NAME = "primary-service-client"
 DOMAIN_PREFIX = "local-m2m-demo"  # must be globally unique on real AWS
 ENV_FILE = ".env.local"
+
+
+def detect_flavor(endpoint_url: str | None) -> str:
+    """Identify the backend so we can emit the right token/JWKS URLs.
+    Returns 'aws', 'robotocore', or 'moto'."""
+    if not endpoint_url:
+        return "aws"
+    base = endpoint_url.rstrip("/")
+    # robotocore advertises itself on a dedicated health path.
+    try:
+        with urllib.request.urlopen(f"{base}/_robotocore/health", timeout=3) as r:
+            if r.status == 200:
+                return "robotocore"
+    except (urllib.error.URLError, OSError):
+        pass
+    return "moto"
 
 
 def make_client(region: str, endpoint_url: str | None):
@@ -169,17 +196,27 @@ def ensure_client(client, pool_id: str) -> tuple[str, str]:
 
 
 # --- outputs -----------------------------------------------------------------
-def env_values(region, pool_id, client_id, secret, endpoint_url) -> dict[str, str]:
-    issuer = f"https://cognito-idp.{region}.amazonaws.com/{pool_id}"
-    if endpoint_url:
-        # moto serves JWKS off its own host; there is no real hosted-UI token
-        # endpoint, so token-url points at the local Flask shim used in tests.
+def env_values(region, pool_id, client_id, secret, endpoint_url, flavor) -> dict[str, str]:
+    if flavor == "robotocore":
+        # robotocore serves a real /oauth2/token, JWKS, and OIDC discovery, all
+        # rooted at its own host with issuer = http://<host>. (The tokens are
+        # NOT cryptographically valid, though — see the note in cmd_setup.)
+        base = endpoint_url.rstrip("/")
+        domain_url = base
+        token_url = f"{base}/oauth2/token"
+        issuer = base
+        jwks = f"{base}/.well-known/jwks.json"
+    elif flavor == "moto":
+        # moto serves JWKS off its own host but has NO token endpoint, so
+        # token-url points at the local Flask shim used in tests.
         # See docs/running/testing-with-moto.md.
-        domain_url = endpoint_url.rstrip("/")
+        base = endpoint_url.rstrip("/")
+        domain_url = base
         token_url = "http://localhost:9999/oauth2/token"
-        issuer = f"{endpoint_url.rstrip('/')}/{pool_id}"
+        issuer = f"{base}/{pool_id}"
         jwks = f"{issuer}/.well-known/jwks.json"
-    else:
+    else:  # real AWS
+        issuer = f"https://cognito-idp.{region}.amazonaws.com/{pool_id}"
         domain_url = f"https://{DOMAIN_PREFIX}.auth.{region}.amazoncognito.com"
         token_url = f"{domain_url}/oauth2/token"
         jwks = f"{issuer}/.well-known/jwks.json"
@@ -205,24 +242,33 @@ def write_env(values: dict[str, str]) -> None:
 
 
 # --- commands ----------------------------------------------------------------
-def cmd_setup(client, region, endpoint_url) -> int:
-    print("setup:")
+def cmd_setup(client, region, endpoint_url, flavor) -> int:
+    print(f"setup:  (backend: {flavor})")
     pool_id = ensure_pool(client)
     ensure_resource_server(client, pool_id)
     ensure_domain(client, pool_id)
     client_id, secret = ensure_client(client, pool_id)
-    write_env(env_values(region, pool_id, client_id, secret, endpoint_url))
-    if endpoint_url:
+    write_env(env_values(region, pool_id, client_id, secret, endpoint_url, flavor))
+    if flavor == "moto":
         print(
             "\nNote: moto does not serve the Cognito /oauth2/token endpoint.\n"
             "For a full local run, start the token/JWKS shim as described in\n"
             "docs/running/testing-with-moto.md."
         )
+    elif flavor == "robotocore":
+        print(
+            "\nNote: robotocore serves a real /oauth2/token, but its tokens are\n"
+            "NOT cryptographically signed (signature is a placeholder), so a\n"
+            "strict resource server rejects them. Use robotocore to exercise the\n"
+            "request FLOW; run secondary with SECURITY_SKIP_SIGNATURE=true to\n"
+            "accept unsigned tokens for a flow demo. See\n"
+            "docs/running/testing-with-robotocore.md."
+        )
     print("setup: done")
     return 0
 
 
-def cmd_status(client, region, endpoint_url) -> int:
+def cmd_status(client, region, endpoint_url, flavor) -> int:
     print("status:")
     pool_id = find_pool(client)
     if not pool_id:
@@ -236,7 +282,7 @@ def cmd_status(client, region, endpoint_url) -> int:
     return 0
 
 
-def cmd_teardown(client, region, endpoint_url) -> int:
+def cmd_teardown(client, region, endpoint_url, flavor) -> int:
     print("teardown:")
     pool_id = find_pool(client)
     if not pool_id:
@@ -263,12 +309,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("command", choices=COMMANDS)
     parser.add_argument("--region", default=os.environ.get("AWS_REGION", "us-east-1"))
     parser.add_argument("--endpoint-url", default=os.environ.get("COGNITO_ENDPOINT_URL"),
-                        help="talk to a local moto server, e.g. http://localhost:5000")
+                        help="local emulator URL, e.g. http://localhost:4566 "
+                             "(robotocore) or http://localhost:5111 (moto)")
     args = parser.parse_args(argv)
 
-    client = make_client(args.region, args.endpoint_url)
+    endpoint = args.endpoint_url or None
+    flavor = detect_flavor(endpoint)
+    client = make_client(args.region, endpoint)
     try:
-        return COMMANDS[args.command](client, args.region, args.endpoint_url)
+        return COMMANDS[args.command](client, args.region, endpoint, flavor)
     except ClientError as e:
         print(f"AWS error: {e}", file=sys.stderr)
         return 1
