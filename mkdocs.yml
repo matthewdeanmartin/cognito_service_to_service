@@ -1,0 +1,40 @@
+---
+site_name: Cognito M2M Local Demo
+site_url: https://cognito-service-to-service.readthedocs.io/
+site_author: Matthew Martin <matthewdeanmartin@gmail.com>
+site_description: Angular -> primary Spring Boot -> secondary Spring Boot with Cognito M2M auth
+repo_url: https://github.com/matthewdeanmartin/cognito_service_to_service
+theme:
+  name: readthedocs
+  features: [navigation.footer]
+edit_uri: edit/main/docs/
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - codehilite
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Concepts:
+      - Client Credentials, Explained: concepts/client-credentials.md
+      - Tokens, Scopes & Validation: concepts/tokens-and-scopes.md
+      - Cognito Building Blocks: concepts/cognito-building-blocks.md
+  - Architecture: architecture.md
+  - Walkthrough:
+      - What Happens on One Click: walkthrough/request-lifecycle.md
+      - The Services in Detail: walkthrough/services.md
+  - Running It:
+      - Setup & Runbook: running/runbook.md
+      - Testing Without AWS (moto): running/testing-with-moto.md
+  - FAQ: faq.md
+validation:
+  nav:
+    omitted_files: warn
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+plugins:
+  - search

@@ -1,4 +1,4 @@
-.PHONY: help install deploy destroy export-env run-primary run-secondary run-ui test-demo clean
+.PHONY: help install deploy destroy export-env run-primary run-secondary run-ui test-demo clean docs docs-serve
 
 help:
 	@echo "Targets:"
@@ -11,6 +11,8 @@ help:
 	@echo "  make test-demo      Smoke test primary -> secondary"
 	@echo "  make destroy        Destroy Cognito stack"
 	@echo "  make clean          Clean local build outputs"
+	@echo "  make docs           Build the MkDocs site into ./site"
+	@echo "  make docs-serve     Serve the docs locally with live reload"
 
 install:
 	./scripts/install.sh
@@ -38,3 +40,11 @@ destroy:
 
 clean:
 	./scripts/clean.sh
+
+docs:
+	python -m pip install -q -r docs/requirements.txt
+	mkdocs build --strict
+
+docs-serve:
+	python -m pip install -q -r docs/requirements.txt
+	mkdocs serve

@@ -35,6 +35,9 @@ node_modules/
 ui/.angular/
 dist/
 
+# MkDocs build output
+/site/
+
 # CDK
 infra/cdk.out/
 *.d.ts

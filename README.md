@@ -11,7 +11,10 @@ Angular (4200)  --X-Demo-User-->  primary (8081)  --Bearer JWT-->  secondary (80
                                             secondary validates JWT via Cognito JWKS
 ```
 
-See [`spec/spec.md`](spec/spec.md) for the full design.
+See [`spec/spec.md`](spec/spec.md) for the full design, or the
+[**docs**](docs/index.md) for a concept-first explanation — start with
+[Client Credentials, Explained](docs/concepts/client-credentials.md) if the M2M
+auth is the confusing part. Build them locally with `make docs-serve`.
 
 ## Quick start
 
