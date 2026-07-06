@@ -3,6 +3,7 @@ package com.example.primary;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -19,6 +20,7 @@ public class CognitoTokenClient {
     private final RestClient restClient;
     private final AtomicReference<CachedToken> cachedToken = new AtomicReference<>();
 
+    @Autowired
     public CognitoTokenClient(CognitoTokenProperties properties) {
         this(properties, RestClient.builder().build());
     }
