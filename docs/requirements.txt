@@ -1,1 +1,4 @@
+# Read the Docs installs the docs toolchain from this file.
+# Keep in sync with the [project] dependencies in ../pyproject.toml,
+# which is the source of truth for local development (`uv sync`).
 mkdocs>=1.6.0

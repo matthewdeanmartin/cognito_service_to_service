@@ -42,9 +42,9 @@ clean:
 	./scripts/clean.sh
 
 docs:
-	python -m pip install -q -r docs/requirements.txt
-	mkdocs build --strict
+	uv sync
+	uv run mkdocs build --strict
 
 docs-serve:
-	python -m pip install -q -r docs/requirements.txt
-	mkdocs serve
+	uv sync
+	uv run mkdocs serve

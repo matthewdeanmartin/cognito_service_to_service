@@ -14,7 +14,15 @@ Angular (4200)  --X-Demo-User-->  primary (8081)  --Bearer JWT-->  secondary (80
 See [`spec/spec.md`](spec/spec.md) for the full design, or the
 [**docs**](docs/index.md) for a concept-first explanation — start with
 [Client Credentials, Explained](docs/concepts/client-credentials.md) if the M2M
-auth is the confusing part. Build them locally with `make docs-serve`.
+auth is the confusing part.
+
+Build the docs locally with `make docs-serve` (uses `uv` + a `.venv`; requires
+[uv](https://docs.astral.sh/uv/)), or directly:
+
+```bash
+uv sync              # create .venv and install mkdocs (from pyproject.toml)
+uv run mkdocs serve  # live-reload preview at http://localhost:8000
+```
 
 ## Quick start
 
